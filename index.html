@@ -75,7 +75,8 @@
         };
 
         // Отправка данных обратно в Telegram бот
-        tg.sendData(JSON.stringify(formData));
+        console.log("Sending data to Telegram:", JSON.stringify(formData));
+        Telegram.WebApp.sendData(JSON.stringify(formData));
     });
 </script>
 
