@@ -3,82 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram WebApp Form</title>
+    <title>Telegram User Form</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+            background-color: #f4f4f4;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
-            background-color: #f9f9f9;
+            margin: 0;
         }
         form {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 400px;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        input, textarea {
+        input, textarea, button {
             width: 100%;
-            padding: 10px;
             margin: 10px 0;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 5px;
         }
         button {
-            width: 100%;
-            padding: 10px;
-            background: #0088cc;
+            background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
         }
         button:hover {
-            background: #005f8d;
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h1>Telegram User Form</h1>
-    <form id="userForm">
-        <input type="text" id="fullName" placeholder="Full Name" required>
+    <form id="user-form">
+        <h1>Telegram User Form</h1>
+        <input type="text" id="id" placeholder="ID" required>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="text" id="full_name" placeholder="Full Name" required>
         <input type="date" id="dob" placeholder="Date of Birth" required>
-        <input type="tel" id="phone" placeholder="Phone Number" required>
-        <textarea id="about" placeholder="Tell us about yourself" required></textarea>
-        <button type="button" onclick="submitForm()">Submit</button>
+        <input type="tel" id="phone" placeholder="Phone" required>
+        <textarea id="about" placeholder="About"></textarea>
+        <button id="submit" type="button">Submit</button>
     </form>
-<script>
-    const tg = window.Telegram.WebApp;
 
-    document.getElementById('submit-button').addEventListener('click', () => {
-        const fullName = document.getElementById('full_name').value;
-        const dob = document.getElementById('dob').value;
-        const phone = document.getElementById('phone').value;
-        const about = document.getElementById('about').value;
+    <script>
+        // Function to send form data to Telegram Web App
+        function submitForm() {
+            const formData = {
+                id: document.getElementById("id").value,
+                username: document.getElementById("username").value,
+                full_name: document.getElementById("full_name").value,
+                dob: document.getElementById("dob").value,
+                phone: document.getElementById("phone").value,
+                about: document.getElementById("about").value
+            };
 
-        // Формирование данных
-        const formData = {
-            id: tg.initDataUnsafe.user.id,
-            username: tg.initDataUnsafe.user.username,
-            full_name: fullName,
-            dob: dob,
-            phone: phone,
-            about: about,
-        };
+            console.log("Sending data to Telegram:", formData);
 
-        // Отправка данных обратно в Telegram бот
-        console.log("Sending data to Telegram:", JSON.stringify(formData));
-        Telegram.WebApp.sendData(JSON.stringify(formData));
-    });
-</script>
+            // Send data back to Telegram Web App
+            Telegram.WebApp.sendData(JSON.stringify(formData));
+        }
 
+        // Attach event listener to the button
+        document.addEventListener("DOMContentLoaded", function () {
+            const submitButton = document.getElementById("submit");
+            if (submitButton) {
+                submitButton.addEventListener("click", submitForm);
+            } else {
+                console.error("Submit button not found.");
+            }
+        });
+
+        // Initialize the Telegram Web App
+        Telegram.WebApp.ready();
+        console.log("Telegram Web App initialized:", Telegram.WebApp);
+    </script>
 </body>
 </html>
