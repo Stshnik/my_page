@@ -55,31 +55,29 @@
         <textarea id="about" placeholder="Tell us about yourself" required></textarea>
         <button type="button" onclick="submitForm()">Submit</button>
     </form>
+<script>
+    const tg = window.Telegram.WebApp;
 
-    <script>
-        // Initialize Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Optional: Expands the WebApp to full screen
+    document.getElementById('submit-button').addEventListener('click', () => {
+        const fullName = document.getElementById('full_name').value;
+        const dob = document.getElementById('dob').value;
+        const phone = document.getElementById('phone').value;
+        const about = document.getElementById('about').value;
 
-        function submitForm() {
-            const fullName = document.getElementById('fullName').value;
-            const dob = document.getElementById('dob').value;
-            const phone = document.getElementById('phone').value;
-            const about = document.getElementById('about').value;
+        // Формирование данных
+        const formData = {
+            id: tg.initDataUnsafe.user.id,
+            username: tg.initDataUnsafe.user.username,
+            full_name: fullName,
+            dob: dob,
+            phone: phone,
+            about: about,
+        };
 
-            // Collect form data
-            const formData = {
-                id: tg.initDataUnsafe.user.id,
-                username: tg.initDataUnsafe.user.username,
-                full_name: fullName,
-                dob: dob,
-                phone: phone,
-                about: about
-            };
+        // Отправка данных обратно в Telegram бот
+        tg.sendData(JSON.stringify(formData));
+    });
+</script>
 
-            // Send data to the bot
-            tg.sendData(JSON.stringify(formData));
-        }
-    </script>
 </body>
 </html>
