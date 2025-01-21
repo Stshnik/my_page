@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram User Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        input, textarea, button { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+        button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Telegram User Form</h1>
+        <form id="userForm">
+            <input type="text" id="id" name="id" readonly placeholder="User ID">
+            <input type="text" id="username" name="username" readonly placeholder="Username">
+            <input type="text" id="full_name" name="full_name" placeholder="Full Name" required>
+            <input type="date" id="dob" name="dob" placeholder="Date of Birth" required>
+            <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
+            <textarea id="about" name="about" rows="4" placeholder="About Yourself" required></textarea>
+            <button type="button" id="submitBtn">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        // Extract query parameters (id and username) from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+        const username = urlParams.get('username');
+
+        // Populate the form with user data
+        document.getElementById('id').value = userId || '';
+        document.getElementById('username').value = username || '';
+
+        // Submit button functionality
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            const formData = {
+                id: document.getElementById('id').value,
+                username: document.getElementById('username').value,
+                full_name: document.getElementById('full_name').value,
+                dob: document.getElementById('dob').value,
+                phone: document.getElementById('phone').value,
+                about: document.getElementById('about').value,
+            };
+
+            // Send data to Telegram bot as a JSON string
+            fetch(`https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: formData.id,
+                    text: JSON.stringify(formData),
+                }),
+            })
+            .then(response => response.json())
+            .then(data => alert('Form submitted successfully!'))
+            .catch(error => alert('Error submitting the form.'));
+        });
+    </script>
+</body>
+</html>
