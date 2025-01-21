@@ -4,63 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram User Form</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        form { display: flex; flex-direction: column; gap: 15px; }
-        input, textarea, button { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
-        button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        input, textarea {
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Telegram User Form</h1>
         <form id="userForm">
-            <input type="text" id="id" name="id" readonly placeholder="User ID">
-            <input type="text" id="username" name="username" readonly placeholder="Username">
-            <input type="text" id="full_name" name="full_name" placeholder="Full Name" required>
-            <input type="date" id="dob" name="dob" placeholder="Date of Birth" required>
-            <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
-            <textarea id="about" name="about" rows="4" placeholder="About Yourself" required></textarea>
-            <button type="button" id="submitBtn">Submit</button>
+            <label for="full_name">Full Name</label>
+            <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
+
+            <label for="dob">Date of Birth</label>
+            <input type="date" id="dob" name="dob" required>
+
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+
+            <label for="about">About You</label>
+            <textarea id="about" name="about" rows="4" placeholder="Tell us about yourself" required></textarea>
+
+            <button type="submit">Submit</button>
         </form>
     </div>
 
     <script>
-        // Extract query parameters (id and username) from the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('id');
-        const username = urlParams.get('username');
+        const form = document.getElementById("userForm");
 
-        // Populate the form with user data
-        document.getElementById('id').value = userId || '';
-        document.getElementById('username').value = username || '';
+        form.addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent page reload
 
-        // Submit button functionality
-        document.getElementById('submitBtn').addEventListener('click', () => {
+            // Collect form data
             const formData = {
-                id: document.getElementById('id').value,
-                username: document.getElementById('username').value,
-                full_name: document.getElementById('full_name').value,
-                dob: document.getElementById('dob').value,
-                phone: document.getElementById('phone').value,
-                about: document.getElementById('about').value,
+                full_name: document.getElementById("full_name").value,
+                dob: document.getElementById("dob").value,
+                phone: document.getElementById("phone").value,
+                about: document.getElementById("about").value,
             };
 
-            // Send data to Telegram bot as a JSON string
-            fetch(`https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: formData.id,
-                    text: JSON.stringify(formData),
-                }),
-            })
-            .then(response => response.json())
-            .then(data => alert('Form submitted successfully!'))
-            .catch(error => alert('Error submitting the form.'));
+            // Send data back to Telegram Bot
+            Telegram.WebApp.sendData(JSON.stringify(formData)); // Sending form data as a string
+
+            // Optionally show a confirmation to the user
+            alert("Form submitted successfully!");
         });
     </script>
 </body>
