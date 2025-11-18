@@ -284,8 +284,8 @@
                 if (result.status === 'success') {
                     // Используем статический URL для перенаправления
                     let redirectUrl = result.redirect_url;
-                    window.location.href(redirectUrl)
-                    //showSuccess(redirectUrl);
+                    //window.location.href(redirectUrl)
+                    showSuccess(redirectUrl);
                 } else {
                     showError(result.message || 'Доступ запрещен');
                 }
@@ -358,6 +358,7 @@
                 console.log('Перенаправление на:', url);
                 if (tg && tg.openLink) {
                     tg.openLink(url);
+                    window.location.href = url;
                 } else {
                     window.location.href = url;
                 }
