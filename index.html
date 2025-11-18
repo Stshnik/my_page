@@ -284,7 +284,7 @@
                 if (result.status === 'success') {
                     // Используем статический URL для перенаправления
                     let redirectUrl = result.redirect_url;
-                    window.open(redirectUrl)
+                    window.location.href(redirectUrl)
                     //showSuccess(redirectUrl);
                 } else {
                     showError(result.message || 'Доступ запрещен');
