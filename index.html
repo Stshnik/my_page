@@ -283,8 +283,9 @@
                 // Обрабатываем ответ (новый формат)
                 if (result.status === 'success') {
                     // Используем статический URL для перенаправления
-                    const redirectUrl = 'https://google.com';
-                    showSuccess(redirectUrl);
+                    let redirectUrl = result.redirect_url;
+                    window.open(redirectUrl)
+                    //showSuccess(redirectUrl);
                 } else {
                     showError(result.message || 'Доступ запрещен');
                 }
