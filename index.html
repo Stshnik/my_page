@@ -171,7 +171,7 @@
 
     <script>
         // Конфигурация
-        const SERVER_URL = 'https://apixapaa3stru.serveirc.com:8443'; // server
+        const SERVER_URL = 'https://apixapaa3stru.serveirc.com:8443';
 
         // Элементы DOM
         const loadingElement = document.getElementById('loading');
@@ -197,7 +197,7 @@
                 tg.enableClosingConfirmation();
                 
                 console.log('=== Telegram WebApp Data ===');
-                console.log('Init Data:', tg.initData);
+                console.log('Init Data (raw):', tg.initData);
                 console.log('Init Data Unsafe:', tg.initDataUnsafe);
                 console.log('Platform:', tg.platform);
                 console.log('Version:', tg.version);
@@ -229,7 +229,8 @@
                 <strong>Фамилия:</strong> ${user?.last_name || 'не указана'}<br>
                 <strong>Language:</strong> ${user?.language_code || 'не указан'}<br>
                 <strong>Auth Date:</strong> ${user?.auth_date ? new Date(user.auth_date * 1000).toLocaleString() : 'не указано'}<br>
-                <strong>Hash:</strong> ${tg.initDataUnsafe.hash ? '✓ присутствует' : '✗ отсутствует'}
+                <strong>Hash:</strong> ${tg.initDataUnsafe.hash ? '✓ присутствует' : '✗ отсутствует'}<br>
+                <strong>Init Data (raw):</strong> ${tg.initData ? '✓ присутствует' : '✗ отсутствует'}
             `;
             
             initDataElement.innerHTML = initData;
@@ -238,15 +239,17 @@
         // Проверка доступа пользователя
         async function checkUserAccess() {
             try {
-                // Получаем данные пользователя ПРАВИЛЬНЫМ способом
+                // Получаем данные пользователя
                 const user = tg.initDataUnsafe.user;
                 
                 if (!user || !user.id) {
                     throw new Error('Данные пользователя не получены от Telegram');
                 }
 
-                // Подготавливаем данные для отправки
-                const userData = {
+                // 🔥 ВАЖНО: Отправляем сырую строку initData для правильной проверки хеша
+                const requestData = {
+                    initData: tg.initData, // Сырая строка для проверки хеша
+                    // Также отправляем разобранные данные для информации
                     tg_id: user.id,
                     tg_username: user.username,
                     tg_firstname: user.first_name,
@@ -255,10 +258,11 @@
                     hash: tg.initDataUnsafe.hash
                 };
 
-                console.log('Отправляемые данные:', userData);
+                console.log('📤 Отправляемые данные:', requestData);
+                console.log('🔐 Сырая строка initData:', tg.initData);
 
                 // Показываем информацию о пользователе
-                showUserInfo(userData);
+                showUserInfo(requestData);
 
                 // Отправляем на сервер
                 const response = await fetch(SERVER_URL + '/verify-user', {
@@ -266,7 +270,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(userData)
+                    body: JSON.stringify(requestData)
                 });
 
                 if (!response.ok) {
@@ -274,11 +278,13 @@
                 }
 
                 const result = await response.json();
-                console.log('Ответ сервера:', result);
+                console.log('📥 Ответ сервера:', result);
 
-                // Обрабатываем ответ
-                if (result.success && result.redirect_url) {
-                    showSuccess(result.redirect_url);
+                // Обрабатываем ответ (новый формат)
+                if (result.status === 'success') {
+                    // Используем статический URL для перенаправления
+                    const redirectUrl = 'https://google.com';
+                    showSuccess(redirectUrl);
                 } else {
                     showError(result.message || 'Доступ запрещен');
                 }
@@ -297,6 +303,7 @@
                 <div><strong>Имя:</strong> ${userData.tg_firstname || 'не указано'}</div>
                 <div><strong>Фамилия:</strong> ${userData.tg_lastname || 'не указана'}</div>
                 <div><strong>Auth Date:</strong> ${userData.auth_date ? new Date(userData.auth_date * 1000).toLocaleString() : 'не указано'}</div>
+                <div><strong>Init Data:</strong> ${userData.initData ? '✓ отправлено' : '✗ отсутствует'}</div>
             `;
             
             successInfoElement.innerHTML = '<strong>Информация о пользователе:</strong>' + userInfo;
@@ -367,7 +374,8 @@
                 tg_firstname: 'Иван',
                 tg_lastname: 'Тестов',
                 auth_date: Math.floor(Date.now() / 1000),
-                hash: 'mock_hash_for_testing'
+                hash: 'mock_hash_for_testing',
+                initData: 'mock_init_data_string'
             };
             
             showUserInfo(mockData);
@@ -389,7 +397,8 @@
                     tg_username: 'test_user',
                     tg_firstname: 'Тест',
                     tg_lastname: 'Пользователь',
-                    auth_date: Math.floor(Date.now() / 1000)
+                    auth_date: Math.floor(Date.now() / 1000),
+                    initData: 'test_init_data'
                 };
                 showUserInfo(testData);
             }
