@@ -1,98 +1,406 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram User Form</title>
+    <title>Telegram Web App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        form {
-            background: white;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 100%;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
             max-width: 400px;
-        }
-        input, textarea, button {
             width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
         }
-        button {
-            background-color: #007bff;
+
+        .hidden {
+            display: none;
+        }
+
+        .loading p {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .content h1 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .content p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .countdown {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 15px 0;
+        }
+
+        .error h2 {
+            color: #f44336;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .error p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .retry-btn {
+            background: #667eea;
             color: white;
             border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 16px;
             cursor: pointer;
+            transition: background 0.3s;
+            margin: 10px 5px;
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .retry-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 14px;
+            text-align: left;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-info div {
+            margin: 5px 0;
+            padding: 2px 0;
+        }
+
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+            text-align: left;
+            color: #856404;
+        }
+
+        .test-buttons {
+            margin: 15px 0;
         }
     </style>
 </head>
 <body>
-    <form id="user-form">
-        <h1>Telegram User Form</h1>
-        <input type="text" id="id" placeholder="ID" required>
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="text" id="full_name" placeholder="Full Name" required>
-        <input type="date" id="dob" placeholder="Date of Birth" required>
-        <input type="tel" id="phone" placeholder="Phone" required>
-        <textarea id="about" placeholder="About"></textarea>
-        <button id="submit" type="button">Submit</button>
-    </form>
+    <div class="container">
+        <!-- Загрузка -->
+        <div id="loading">
+            <div class="loading">
+                <p>🔐 Проверка доступа...</p>
+                <div class="spinner"></div>
+                <div id="initData" class="debug-info"></div>
+            </div>
+        </div>
+
+        <!-- Успех -->
+        <div id="success" class="hidden">
+            <div class="content">
+                <h1>✅ Доступ разрешен!</h1>
+                <p>Перенаправляем вас...</p>
+                <div class="countdown" id="countdown">3</div>
+                <div class="user-info" id="successInfo"></div>
+                <button class="retry-btn" onclick="showLoading()">Назад</button>
+            </div>
+        </div>
+
+        <!-- Ошибка -->
+        <div id="error" class="hidden">
+            <div class="error">
+                <h2>❌ Доступ запрещен</h2>
+                <p id="errorMessage">У вас нет прав для использования этого приложения</p>
+                <div class="user-info" id="errorInfo"></div>
+                <div class="test-buttons">
+                    <button class="retry-btn" onclick="location.reload()">Обновить страницу</button>
+                    <button class="retry-btn" onclick="testWithMockData()">Тест с mock данными</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Extract parameters from URL
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get("id");
-        const username = params.get("username");
+        // Конфигурация
+        const SERVER_URL = 'https://apixapaa3stru.serveirc.com:8443'; // server
 
-        // Pre-fill the form fields with URL parameters
-        if (id) document.getElementById("id").value = id;
-        if (username) document.getElementById("username").value = username;
+        // Элементы DOM
+        const loadingElement = document.getElementById('loading');
+        const successElement = document.getElementById('success');
+        const errorElement = document.getElementById('error');
+        const countdownElement = document.getElementById('countdown');
+        const errorMessageElement = document.getElementById('errorMessage');
+        const successInfoElement = document.getElementById('successInfo');
+        const errorInfoElement = document.getElementById('errorInfo');
+        const initDataElement = document.getElementById('initData');
 
-        // Function to send form data to Telegram Web App
-        function submitForm() {
-            const formData = {
-                id: document.getElementById("id").value,
-                username: document.getElementById("username").value,
-                full_name: document.getElementById("full_name").value,
-                dob: document.getElementById("dob").value,
-                phone: document.getElementById("phone").value,
-                about: document.getElementById("about").value
-            };
+        let tg;
+        let countdownInterval;
 
-            console.log("Sending data to Telegram:", formData);
-
-            // Send data back to Telegram Web App
-            Telegram.WebApp.sendData(JSON.stringify(formData));
+        // Инициализация приложения
+        function initApp() {
+            try {
+                tg = window.Telegram.WebApp;
+                
+                // Инициализируем WebApp
+                tg.ready();
+                tg.expand();
+                tg.enableClosingConfirmation();
+                
+                console.log('=== Telegram WebApp Data ===');
+                console.log('Init Data:', tg.initData);
+                console.log('Init Data Unsafe:', tg.initDataUnsafe);
+                console.log('Platform:', tg.platform);
+                console.log('Version:', tg.version);
+                
+                // Показываем полученные данные для отладки
+                showInitData();
+                
+                checkUserAccess();
+                
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                showError('Ошибка загрузки приложения: ' + error.message);
+            }
         }
 
-        // Attach event listener to the button
-        document.addEventListener("DOMContentLoaded", function () {
-            const submitButton = document.getElementById("submit");
-            if (submitButton) {
-                submitButton.addEventListener("click", submitForm);
+        // Показываем данные инициализации
+        function showInitData() {
+            if (!tg || !tg.initDataUnsafe) {
+                initDataElement.innerHTML = '<strong>Данные не получены:</strong> Telegram WebApp не предоставил данные';
+                return;
+            }
+
+            const user = tg.initDataUnsafe.user;
+            const initData = `
+                <strong>Данные от Telegram:</strong><br>
+                <strong>User ID:</strong> ${user?.id || 'не указан'}<br>
+                <strong>Username:</strong> @${user?.username || 'не указан'}<br>
+                <strong>Имя:</strong> ${user?.first_name || 'не указано'}<br>
+                <strong>Фамилия:</strong> ${user?.last_name || 'не указана'}<br>
+                <strong>Language:</strong> ${user?.language_code || 'не указан'}<br>
+                <strong>Auth Date:</strong> ${user?.auth_date ? new Date(user.auth_date * 1000).toLocaleString() : 'не указано'}<br>
+                <strong>Hash:</strong> ${tg.initDataUnsafe.hash ? '✓ присутствует' : '✗ отсутствует'}
+            `;
+            
+            initDataElement.innerHTML = initData;
+        }
+
+        // Проверка доступа пользователя
+        async function checkUserAccess() {
+            try {
+                // Получаем данные пользователя ПРАВИЛЬНЫМ способом
+                const user = tg.initDataUnsafe.user;
+                
+                if (!user || !user.id) {
+                    throw new Error('Данные пользователя не получены от Telegram');
+                }
+
+                // Подготавливаем данные для отправки
+                const userData = {
+                    tg_id: user.id,
+                    tg_username: user.username,
+                    tg_firstname: user.first_name,
+                    tg_lastname: user.last_name,
+                    auth_date: tg.initDataUnsafe.auth_date,
+                    hash: tg.initDataUnsafe.hash
+                };
+
+                console.log('Отправляемые данные:', userData);
+
+                // Показываем информацию о пользователе
+                showUserInfo(userData);
+
+                // Отправляем на сервер
+                const response = await fetch(SERVER_URL + '/verify-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера: ' + response.status);
+                }
+
+                const result = await response.json();
+                console.log('Ответ сервера:', result);
+
+                // Обрабатываем ответ
+                if (result.success && result.redirect_url) {
+                    showSuccess(result.redirect_url);
+                } else {
+                    showError(result.message || 'Доступ запрещен');
+                }
+
+            } catch (error) {
+                console.error('Ошибка проверки доступа:', error);
+                showError(error.message);
+            }
+        }
+
+        // Показываем информацию о пользователе
+        function showUserInfo(userData) {
+            const userInfo = `
+                <div><strong>ID:</strong> ${userData.tg_id || 'не указан'}</div>
+                <div><strong>Username:</strong> @${userData.tg_username || 'не указан'}</div>
+                <div><strong>Имя:</strong> ${userData.tg_firstname || 'не указано'}</div>
+                <div><strong>Фамилия:</strong> ${userData.tg_lastname || 'не указана'}</div>
+                <div><strong>Auth Date:</strong> ${userData.auth_date ? new Date(userData.auth_date * 1000).toLocaleString() : 'не указано'}</div>
+            `;
+            
+            successInfoElement.innerHTML = '<strong>Информация о пользователе:</strong>' + userInfo;
+            errorInfoElement.innerHTML = '<strong>Информация о пользователе:</strong>' + userInfo;
+        }
+
+        // Показываем успех
+        function showSuccess(redirectUrl) {
+            hideAll();
+            successElement.classList.remove('hidden');
+
+            // Добавляем URL в информацию
+            successInfoElement.innerHTML += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;"><strong>Перенаправление на:</strong><br>${redirectUrl}</div>`;
+
+            // Обратный отсчет
+            let seconds = 3;
+            countdownInterval = setInterval(() => {
+                countdownElement.textContent = seconds;
+                seconds--;
+
+                if (seconds < 0) {
+                    clearInterval(countdownInterval);
+                    redirect(redirectUrl);
+                }
+            }, 1000);
+        }
+
+        // Показываем ошибку
+        function showError(message) {
+            hideAll();
+            errorElement.classList.remove('hidden');
+            errorMessageElement.textContent = message;
+        }
+
+        // Показываем загрузку
+        function showLoading() {
+            hideAll();
+            loadingElement.classList.remove('hidden');
+        }
+
+        // Скрываем все элементы
+        function hideAll() {
+            loadingElement.classList.add('hidden');
+            successElement.classList.add('hidden');
+            errorElement.classList.add('hidden');
+        }
+
+        // Перенаправление
+        function redirect(url) {
+            try {
+                console.log('Перенаправление на:', url);
+                if (tg && tg.openLink) {
+                    tg.openLink(url);
+                } else {
+                    window.location.href = url;
+                }
+            } catch (error) {
+                console.error('Ошибка перенаправления:', error);
+                window.location.href = url;
+            }
+        }
+
+        // Тест данными
+        function testWithMockData() {
+            const mockData = {
+                tg_id: 123456789,
+                tg_username: 'test_user',
+                tg_firstname: 'Иван',
+                tg_lastname: 'Тестов',
+                auth_date: Math.floor(Date.now() / 1000),
+                hash: 'mock_hash_for_testing'
+            };
+            
+            showUserInfo(mockData);
+            showSuccess('https://example.com/welcome?user_id=' + mockData.tg_id);
+        }
+
+        // Запуск при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                initApp();
             } else {
-                console.error("Submit button not found.");
+                // Режим тестирования вне Telegram
+                showError('Это приложение должно быть запущено через Telegram бота');
+                initDataElement.innerHTML = '<strong>Режим тестирования:</strong> Запустите через Telegram бота для получения реальных данных';
+                
+                // Показываем mock данные для тестирования
+                const testData = {
+                    tg_id: 123456789,
+                    tg_username: 'test_user',
+                    tg_firstname: 'Тест',
+                    tg_lastname: 'Пользователь',
+                    auth_date: Math.floor(Date.now() / 1000)
+                };
+                showUserInfo(testData);
             }
         });
 
-        // Initialize the Telegram Web App
-        Telegram.WebApp.ready();
-        console.log("Telegram Web App initialized:", Telegram.WebApp);
+        // Очистка при закрытии
+        window.addEventListener('beforeunload', function() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+        });
     </script>
 </body>
 </html>
